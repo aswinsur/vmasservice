@@ -1,42 +1,107 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Azure Static UI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Azure VM Deployment Portal</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        select, button { margin-top: 5px; padding: 5px; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f8fb;
+            margin: 0;
+            padding: 0;
+        }
+        header {
+            background-color: #0078d4;
+            color: white;
+            padding: 15px;
+            text-align: center;
+            font-size: 1.5em;
+        }
+        .container {
+            max-width: 500px;
+            margin: 40px auto;
+            background-color: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+            color: #333;
+        }
+        select, button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+        }
+        button {
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background-color: #005fa3;
+        }
+        footer {
+            text-align: center;
+            font-size: 0.9em;
+            margin-top: 20px;
+            color: #666;
+        }
     </style>
 </head>
 <body>
-    <h1>Azure Deployment Form</h1>
 
-    <label for="subscription">Subscription</label>
+<header>
+    Azure VM Deployment Portal
+</header>
+
+<div class="container">
+    <label for="subscription">Select Subscription</label>
     <select id="subscription">
-        <option>Subscription 1</option>
-        <option>Subscription 2</option>
+        <option>Subscription A</option>
+        <option>Subscription B</option>
+        <option>Subscription C</option>
     </select>
 
-    <label for="region">Region</label>
+    <label for="region">Select Region</label>
     <select id="region">
         <option>East US</option>
         <option>West Europe</option>
         <option>Southeast Asia</option>
     </select>
 
-    <label for="vnet">Virtual Network</label>
+    <label for="vnet">Select VNet</label>
     <select id="vnet">
         <option>VNet1</option>
         <option>VNet2</option>
+        <option>VNet3</option>
     </select>
 
-    <label for="subnet">Subnet</label>
-    <select id="subnet">
-        <option>Subnet-A</option>
-        <option>Subnet-B</option>
-    </select>
+    <button onclick="submitForm()">Submit</button>
+</div>
 
-    <br><br>
-    <button onclick="alert('Form Submitted!')">Submit</button>
+<footer>
+    © 2025 Azure Static UI Portal
+</footer>
+
+<script>
+    function submitForm() {
+        const subscription = document.getElementById('subscription').value;
+        const region = document.getElementById('region').value;
+        const vnet = document.getElementById('vnet').value;
+
+        alert(`Selected:\nSubscription: ${subscription}\nRegion: ${region}\nVNet: ${vnet}`);
+    }
+</script>
+
 </body>
 </html>
