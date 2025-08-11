@@ -1,136 +1,76 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>VM Deployment Request</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 20px; }
-        label { display: block; margin-top: 10px; font-weight: bold; }
-        select, input { width: 300px; padding: 5px; margin-top: 5px; }
-        .error { color: red; }
-        .success { color: green; }
-    </style>
+    <title>VM Deployment</title>
 </head>
 <body>
+    <h1>VM Deployment Form</h1>
 
-<h2>VM Deployment Request</h2>
+    <label>Subscription:</label>
+    <select id="subscription" onchange="loadResourceGroups()"></select><br><br>
 
-<form id="vmForm">
-    <!-- Subscription -->
-    <label for="subscription">Subscription:</label>
-    <select id="subscription" name="subscription" required></select>
+    <label>Resource Group:</label>
+    <select id="resourceGroup" onchange="loadVNets()"></select><br><br>
 
-    <!-- Resource Group -->
-    <label for="resourceGroup">Resource Group:</label>
-    <select id="resourceGroup" name="resourceGroup" required></select>
+    <label>VNet:</label>
+    <select id="vnet"></select><br><br>
 
-    <!-- VNet -->
-    <label for="vnet">Virtual Network:</label>
-    <select id="vnet" name="vnet" required></select>
+    <label>VM Name:</label>
+    <input type="text" id="vmName" onblur="checkVMName()"><br><br>
 
-    <!-- VM Name -->
-    <label for="vmName">VM Name:</label>
-    <input type="text" id="vmName" name="vmName" required>
-    <div id="vmStatus"></div>
+    <p id="vmCheckResult" style="color:red;"></p>
 
-    <br><br>
-    <button type="submit">Deploy VM</button>
-</form>
+    <script>
+        const logicAppBaseUrl = "https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM";
 
-<script>
-const LOGIC_APP_URL = "https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM"; // Replace with your Logic App HTTP trigger URL
+        async function loadSubscriptions() {
+            let res = await fetch(`${logicAppBaseUrl}/getSubscriptions`);
+            let data = await res.json();
+            let subDropdown = document.getElementById("subscription");
+            subDropdown.innerHTML = "";
+            data.forEach(sub => {
+                subDropdown.innerHTML += `<option value="${sub.id}">${sub.displayName}</option>`;
+            });
+            loadResourceGroups();
+        }
 
-async function apiFetch(action, params = {}) {
-    const res = await fetch(LOGIC_APP_URL, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action, ...params })
-    });
-    return await res.json();
-}
+        async function loadResourceGroups() {
+            let subId = document.getElementById("subscription").value;
+            let res = await fetch(`${logicAppBaseUrl}/getResourceGroups?subscriptionId=${subId}`);
+            let data = await res.json();
+            let rgDropdown = document.getElementById("resourceGroup");
+            rgDropdown.innerHTML = "";
+            data.forEach(rg => {
+                rgDropdown.innerHTML += `<option value="${rg.name}">${rg.name}</option>`;
+            });
+            loadVNets();
+        }
 
-async function loadSubscriptions() {
-    const data = await apiFetch('getSubscriptions');
-    const subSelect = document.getElementById('subscription');
-    subSelect.innerHTML = '<option value="">Select Subscription</option>';
-    (data.value || []).forEach(sub => {
-        let opt = document.createElement('option');
-        opt.value = sub.subscriptionId;
-        opt.textContent = sub.displayName;
-        subSelect.appendChild(opt);
-    });
-}
+        async function loadVNets() {
+            let subId = document.getElementById("subscription").value;
+            let rgName = document.getElementById("resourceGroup").value;
+            let res = await fetch(`${logicAppBaseUrl}/getVNets?subscriptionId=${subId}&resourceGroup=${rgName}`);
+            let data = await res.json();
+            let vnetDropdown = document.getElementById("vnet");
+            vnetDropdown.innerHTML = "";
+            data.forEach(vnet => {
+                vnetDropdown.innerHTML += `<option value="${vnet.name}">${vnet.name}</option>`;
+            });
+        }
 
-async function loadResourceGroups(subscriptionId) {
-    const data = await apiFetch('getResourceGroups', { subscriptionId });
-    const rgSelect = document.getElementById('resourceGroup');
-    rgSelect.innerHTML = '<option value="">Select Resource Group</option>';
-    (data.value || []).forEach(rg => {
-        let opt = document.createElement('option');
-        opt.value = rg.name;
-        opt.textContent = rg.name;
-        rgSelect.appendChild(opt);
-    });
-}
+        async function checkVMName() {
+            let subId = document.getElementById("subscription").value;
+            let rgName = document.getElementById("resourceGroup").value;
+            let vmName = document.getElementById("vmName").value;
+            if (!vmName) return;
+            let res = await fetch(`${logicAppBaseUrl}/checkVM?subscriptionId=${subId}&resourceGroup=${rgName}&vmName=${vmName}`);
+            let data = await res.json();
+            document.getElementById("vmCheckResult").innerText = data.exists
+                ? "VM name already exists in this resource group!"
+                : "";
+        }
 
-async function loadVNets(subscriptionId, resourceGroup) {
-    const data = await apiFetch('getVNets', { subscriptionId, resourceGroup });
-    const vnetSelect = document.getElementById('vnet');
-    vnetSelect.innerHTML = '<option value="">Select VNet</option>';
-    (data.value || []).forEach(vnet => {
-        let opt = document.createElement('option');
-        opt.value = vnet.name;
-        opt.textContent = vnet.name;
-        vnetSelect.appendChild(opt);
-    });
-}
-
-async function checkVMName(subscriptionId, resourceGroup, vmName) {
-    if (!subscriptionId || !resourceGroup || !vmName) return;
-    const statusDiv = document.getElementById('vmStatus');
-    statusDiv.textContent = "Checking availability...";
-    const result = await apiFetch('checkVMName', { subscriptionId, resourceGroup, vmName });
-    if (result.error || (result.status && result.status === 404)) {
-        statusDiv.innerHTML = `<span class="success">✅ VM name is available</span>`;
-        return true;
-    } else {
-        statusDiv.innerHTML = `<span class="error">❌ VM name already exists!</span>`;
-        return false;
-    }
-}
-
-document.getElementById('subscription').addEventListener('change', (e) => {
-    loadResourceGroups(e.target.value);
-});
-
-document.getElementById('resourceGroup').addEventListener('change', (e) => {
-    const subscriptionId = document.getElementById('subscription').value;
-    loadVNets(subscriptionId, e.target.value);
-});
-
-document.getElementById('vmName').addEventListener('blur', () => {
-    const sub = document.getElementById('subscription').value;
-    const rg = document.getElementById('resourceGroup').value;
-    const vmName = document.getElementById('vmName').value;
-    checkVMName(sub, rg, vmName);
-});
-
-window.onload = loadSubscriptions;
-
-document.getElementById('vmForm').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    const sub = document.getElementById('subscription').value;
-    const rg = document.getElementById('resourceGroup').value;
-    const vnet = document.getElementById('vnet').value;
-    const vmName = document.getElementById('vmName').value;
-    const available = await checkVMName(sub, rg, vmName);
-    if (!available) {
-        alert("VM name already exists. Please choose another.");
-        return;
-    }
-    alert(`Form submitted:\nSubscription: ${sub}\nRG: ${rg}\nVNet: ${vnet}\nVM: ${vmName}`);
-    // Here you can trigger your Azure DevOps pipeline or Logic App deployment
-});
-</script>
-
+        loadSubscriptions();
+    </script>
 </body>
 </html>
