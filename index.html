@@ -3,8 +3,9 @@
 <head>
     <title>VM Deployment Request</title>
     <style>
-        label { display: block; margin-top: 10px; }
-        select, input { width: 300px; padding: 5px; }
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        select, input { width: 300px; padding: 5px; margin-top: 5px; }
         .error { color: red; }
         .success { color: green; }
     </style>
@@ -36,28 +37,34 @@
 </form>
 
 <script>
-async function apiFetch(url) {
-    const res = await fetch(url);
+const LOGIC_APP_URL = "https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM"; // Replace with your Logic App HTTP trigger URL
+
+async function apiFetch(action, params = {}) {
+    const res = await fetch(LOGIC_APP_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action, ...params })
+    });
     return await res.json();
 }
 
 async function loadSubscriptions() {
-    const data = await apiFetch('/api/getSubscriptions');
+    const data = await apiFetch('getSubscriptions');
     const subSelect = document.getElementById('subscription');
     subSelect.innerHTML = '<option value="">Select Subscription</option>';
-    data.forEach(sub => {
+    (data.value || []).forEach(sub => {
         let opt = document.createElement('option');
-        opt.value = sub.id;
-        opt.textContent = sub.name;
+        opt.value = sub.subscriptionId;
+        opt.textContent = sub.displayName;
         subSelect.appendChild(opt);
     });
 }
 
 async function loadResourceGroups(subscriptionId) {
-    const data = await apiFetch(`/api/getResourceGroups?subscriptionId=${subscriptionId}`);
+    const data = await apiFetch('getResourceGroups', { subscriptionId });
     const rgSelect = document.getElementById('resourceGroup');
     rgSelect.innerHTML = '<option value="">Select Resource Group</option>';
-    data.forEach(rg => {
+    (data.value || []).forEach(rg => {
         let opt = document.createElement('option');
         opt.value = rg.name;
         opt.textContent = rg.name;
@@ -66,10 +73,10 @@ async function loadResourceGroups(subscriptionId) {
 }
 
 async function loadVNets(subscriptionId, resourceGroup) {
-    const data = await apiFetch(`/api/getVNets?subscriptionId=${subscriptionId}&resourceGroup=${resourceGroup}`);
+    const data = await apiFetch('getVNets', { subscriptionId, resourceGroup });
     const vnetSelect = document.getElementById('vnet');
     vnetSelect.innerHTML = '<option value="">Select VNet</option>';
-    data.forEach(vnet => {
+    (data.value || []).forEach(vnet => {
         let opt = document.createElement('option');
         opt.value = vnet.name;
         opt.textContent = vnet.name;
@@ -81,13 +88,13 @@ async function checkVMName(subscriptionId, resourceGroup, vmName) {
     if (!subscriptionId || !resourceGroup || !vmName) return;
     const statusDiv = document.getElementById('vmStatus');
     statusDiv.textContent = "Checking availability...";
-    const result = await apiFetch(`/api/checkVMName?subscriptionId=${subscriptionId}&resourceGroup=${resourceGroup}&vmName=${vmName}`);
-    if (result.exists) {
-        statusDiv.innerHTML = `<span class="error">❌ VM name already exists!</span>`;
-        return false;
-    } else {
+    const result = await apiFetch('checkVMName', { subscriptionId, resourceGroup, vmName });
+    if (result.error || (result.status && result.status === 404)) {
         statusDiv.innerHTML = `<span class="success">✅ VM name is available</span>`;
         return true;
+    } else {
+        statusDiv.innerHTML = `<span class="error">❌ VM name already exists!</span>`;
+        return false;
     }
 }
 
@@ -108,6 +115,21 @@ document.getElementById('vmName').addEventListener('blur', () => {
 });
 
 window.onload = loadSubscriptions;
+
+document.getElementById('vmForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const sub = document.getElementById('subscription').value;
+    const rg = document.getElementById('resourceGroup').value;
+    const vnet = document.getElementById('vnet').value;
+    const vmName = document.getElementById('vmName').value;
+    const available = await checkVMName(sub, rg, vmName);
+    if (!available) {
+        alert("VM name already exists. Please choose another.");
+        return;
+    }
+    alert(`Form submitted:\nSubscription: ${sub}\nRG: ${rg}\nVNet: ${vnet}\nVM: ${vmName}`);
+    // Here you can trigger your Azure DevOps pipeline or Logic App deployment
+});
 </script>
 
 </body>
