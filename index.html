@@ -1,65 +1,118 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>VM Deployment Request</title>
-  <style>
-    body { font-family: Arial; background: #f8f9fa; padding: 20px; }
-    .form-container { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
-    select, input { width: 100%; padding: 8px; margin: 8px 0; }
-    button { background: #0078d4; color: white; padding: 10px; border: none; cursor: pointer; border-radius: 5px; }
-    button:hover { background: #005a9e; }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VM Deployment Request</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px;
+            background-color: #f7f9fc;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        form {
+            max-width: 500px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
+        }
+        label {
+            display: block;
+            margin-top: 15px;
+            font-weight: bold;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 8px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        button {
+            margin-top: 20px;
+            background-color: #0078d4;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover {
+            background-color: #005a9e;
+        }
+    </style>
 </head>
 <body>
-  <div class="form-container">
-    <h2>Request VM Deployment</h2>
-    <form id="vmForm">
-      <label>Subscription</label>
-      <select name="subscription" required>
-        <option value="MCAPS-Hybrid-REQ-116125-2025-assurendran">MCAPS-Hybrid-REQ-116125-2025-assurendran</option>
-        <option value="MCAPS-Hybrid-REQ-110820-2025-assurendran">MCAPS-Hybrid-REQ-110820-2025-assurendran</option>
-      </select>
 
-      <label>Region</label>
-      <select name="region">
-        <option value="East US">East US</option>
-        <option value="West Europe">West Europe</option>
-      </select>
+<h1>VM Deployment Request Form</h1>
 
-      <label>VM Size</label>
-      <select name="vm_size">
-        <option value="Standard_DS1_v2">Standard_DS1_v2</option>
-        <option value="Standard_DS2_v2">Standard_DS2_v2</option>
-      </select>
+<form id="vmForm">
+    <label for="subscription">Subscription ID:</label>
+    <input type="text" id="subscription" name="subscription" required>
 
-      <label>VNet</label>
-      <input type="text" name="vnet" placeholder="VNet Name" required />
+    <label for="vnet">VNet Name:</label>
+    <input type="text" id="vnet" name="vnet" required>
 
-      <label>VM Name</label>
-      <input type="text" name="vm_name" required />
+    <label for="subnet">Subnet Name:</label>
+    <input type="text" id="subnet" name="subnet" required>
 
-      <label>Username</label>
-      <input type="text" name="username" required />
+    <label for="vmName">VM Name:</label>
+    <input type="text" id="vmName" name="vmName" required>
 
-      <label>Password</label>
-      <input type="password" name="password" required />
+    <label for="vmSize">VM Size:</label>
+    <input type="text" id="vmSize" name="vmSize" required>
 
-      <button type="submit">Submit</button>
-    </form>
-  </div>
+    <label for="osType">OS Type:</label>
+    <select id="osType" name="osType" required>
+        <option value="">Select OS</option>
+        <option value="Windows">Windows</option>
+        <option value="Linux">Linux</option>
+    </select>
 
-  <script>
-    document.getElementById('vmForm').addEventListener('submit', function(e) {
-      e.preventDefault();
-      const formData = Object.fromEntries(new FormData(e.target).entries());
-      fetch("https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM", {
+    <button type="submit">Submit Request</button>
+</form>
+
+<script>
+document.getElementById("vmForm").addEventListener("submit", function(e) {
+    e.preventDefault();
+
+    const formData = {
+        subscription: document.getElementById("subscription").value,
+        vnet: document.getElementById("vnet").value,
+        subnet: document.getElementById("subnet").value,
+        vmName: document.getElementById("vmName").value,
+        vmSize: document.getElementById("vmSize").value,
+        osType: document.getElementById("osType").value
+    };
+
+    fetch("https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(formData)
-      })
-      .then(res => res.ok ? alert("Request submitted for approval!") : alert("Error submitting request"))
-      .catch(err => console.error(err));
+    })
+    .then(response => {
+        if (response.ok) {
+            alert("VM deployment request submitted successfully!");
+            document.getElementById("vmForm").reset();
+        } else {
+            alert("Failed to submit request.");
+        }
+    })
+    .catch(error => {
+        console.error("Error:", error);
+        alert("An error occurred while submitting the request.");
     });
-  </script>
+});
+</script>
+
 </body>
 </html>
