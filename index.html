@@ -27,7 +27,7 @@
             margin-top: 15px;
             font-weight: bold;
         }
-        input, select, textarea {
+        input, select {
             width: 100%;
             padding: 8px;
             margin-top: 5px;
@@ -55,26 +55,43 @@
 
 <form id="vmForm">
     <label for="subscription">Subscription ID:</label>
-    <input type="text" id="subscription" name="subscription" required>
-
-    <label for="vnet">VNet Name:</label>
-    <input type="text" id="vnet" name="vnet" required>
-
-    <label for="subnet">Subnet Name:</label>
-    <input type="text" id="subnet" name="subnet" required>
-
-    <label for="vmName">VM Name:</label>
-    <input type="text" id="vmName" name="vmName" required>
-
-    <label for="vmSize">VM Size:</label>
-    <input type="text" id="vmSize" name="vmSize" required>
-
-    <label for="osType">OS Type:</label>
-    <select id="osType" name="osType" required>
-        <option value="">Select OS</option>
-        <option value="Windows">Windows</option>
-        <option value="Linux">Linux</option>
+    <select id="subscription" name="subscription" required>
+        <option value="">Select Subscription</option>
+        <option value="41b68ebf-afca-41f2-bcbc-d54deff6d184">41b68ebf-afca-41f2-bcbc-d54deff6d184</option>
+        <option value="cc684760-8f3d-4882-92de-b19e78706653">cc684760-8f3d-4882-92de-b19e78706653</option>
     </select>
+
+    <label for="region">Region:</label>
+    <select id="region" name="region" required>
+        <option value="">Select Region</option>
+        <option value="East US">East US</option>
+        <option value="Central India">Central India</option>
+        <option value="West Europe">West Europe</option>
+    </select>
+
+    <label for="vm_size">VM Size:</label>
+    <select id="vm_size" name="vm_size" required>
+        <option value="">Select Size</option>
+        <option value="Standard_DS1_v2">Standard_DS1_v2</option>
+        <option value="Standard_DS2_v2">Standard_DS2_v2</option>
+        <option value="Standard_B2s">Standard_B2s</option>
+    </select>
+
+    <label for="vnet">VNet:</label>
+    <select id="vnet" name="vnet" required>
+        <option value="">Select VNet</option>
+        <option value="vnet-eastus">vnet-eastus</option>
+        <option value="vnet-centralindia">vnet-centralindia</option>
+    </select>
+
+    <label for="vm_name">VM Name:</label>
+    <input type="text" id="vm_name" name="vm_name" required>
+
+    <label for="username">Username:</label>
+    <input type="text" id="username" name="username" required>
+
+    <label for="password">Password:</label>
+    <input type="password" id="password" name="password" required>
 
     <button type="submit">Submit Request</button>
 </form>
@@ -85,11 +102,12 @@ document.getElementById("vmForm").addEventListener("submit", function(e) {
 
     const formData = {
         subscription: document.getElementById("subscription").value,
-        vnet: document.getElementById("vnet").value,
-        subnet: document.getElementById("subnet").value,
-        vmName: document.getElementById("vmName").value,
-        vmSize: document.getElementById("vmSize").value,
-        osType: document.getElementById("osType").value
+        region: document.getElementById("region").value,
+        vm_size: document.getElementById("vm_size").value,
+        vm_name: document.getElementById("vm_name").value,
+        username: document.getElementById("username").value,
+        password: document.getElementById("password").value,
+        vnet: document.getElementById("vnet").value
     };
 
     fetch("https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM", {
