@@ -1,123 +1,65 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>Azure VM Deployment</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background: linear-gradient(to right, #eef2f3, #8e9eab);
-            color: #333;
-            padding: 20px;
-        }
-        .container {
-            max-width: 600px;
-            margin: auto;
-            background: white;
-            padding: 25px;
-            border-radius: 12px;
-            box-shadow: 0px 0px 15px rgba(0,0,0,0.2);
-        }
-        h1 {
-            text-align: center;
-            color: #005a9e;
-        }
-        label {
-            font-weight: bold;
-            margin-top: 10px;
-            display: block;
-        }
-        select, input {
-            width: 100%;
-            padding: 10px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-        }
-        button {
-            margin-top: 20px;
-            background-color: #0078d4;
-            color: white;
-            padding: 12px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            width: 100%;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #005a9e;
-        }
-        pre {
-            background: #f4f4f4;
-            padding: 15px;
-            border-radius: 8px;
-            overflow-x: auto;
-            margin-top: 20px;
-        }
-    </style>
+  <title>VM Deployment Request</title>
+  <style>
+    body { font-family: Arial; background: #f8f9fa; padding: 20px; }
+    .form-container { background: white; padding: 20px; border-radius: 8px; max-width: 400px; margin: auto; box-shadow: 0px 4px 6px rgba(0,0,0,0.1); }
+    select, input { width: 100%; padding: 8px; margin: 8px 0; }
+    button { background: #0078d4; color: white; padding: 10px; border: none; cursor: pointer; border-radius: 5px; }
+    button:hover { background: #005a9e; }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Azure VM Deployment Form</h1>
+  <div class="form-container">
+    <h2>Request VM Deployment</h2>
+    <form id="vmForm">
+      <label>Subscription</label>
+      <select name="subscription" required>
+        <option value="MCAPS-Hybrid-REQ-116125-2025-assurendran">MCAPS-Hybrid-REQ-116125-2025-assurendran</option>
+        <option value="MCAPS-Hybrid-REQ-110820-2025-assurendran">MCAPS-Hybrid-REQ-110820-2025-assurendran</option>
+      </select>
 
-        <label for="subscription">Subscription</label>
-        <select id="subscription">
-            <option>MCAPS-Hybrid-REQ-116125-2025-assurendran</option>
-            <option>MCAPS-Hybrid-REQ-110820-2025-assurendran</option>
-        </select>
+      <label>Region</label>
+      <select name="region">
+        <option value="East US">East US</option>
+        <option value="West Europe">West Europe</option>
+      </select>
 
-        <label for="region">Region</label>
-        <select id="region">
-            <option>East US</option>
-            <option>West US</option>
-            <option>Central US</option>
-            <option>Southeast Asia</option>
-        </select>
+      <label>VM Size</label>
+      <select name="vm_size">
+        <option value="Standard_DS1_v2">Standard_DS1_v2</option>
+        <option value="Standard_DS2_v2">Standard_DS2_v2</option>
+      </select>
 
-        <label for="vnet">VNet</label>
-        <select id="vnet">
-            <option>VNet-EastUS-Prod</option>
-            <option>VNet-EastUS-Dev</option>
-            <option>VNet-WestUS-Test</option>
-        </select>
+      <label>VNet</label>
+      <input type="text" name="vnet" placeholder="VNet Name" required />
 
-        <label for="vm_size">VM Size</label>
-        <select id="vm_size">
-            <option>Standard_DS1_v2</option>
-            <option>Standard_B2s</option>
-            <option>Standard_D2s_v3</option>
-        </select>
+      <label>VM Name</label>
+      <input type="text" name="vm_name" required />
 
-        <label for="vm_name">VM Name</label>
-        <input type="text" id="vm_name" value="myVM">
+      <label>Username</label>
+      <input type="text" name="username" required />
 
-        <label for="username">Username</label>
-        <input type="text" id="username" value="adminuser">
+      <label>Password</label>
+      <input type="password" name="password" required />
 
-        <label for="password">Password</label>
-        <input type="password" id="password" value="P@ssword1234!">
+      <button type="submit">Submit</button>
+    </form>
+  </div>
 
-        <button onclick="generateJSON()">Generate JSON</button>
-
-        <pre id="output"></pre>
-    </div>
-
-    <script>
-        function generateJSON() {
-            const data = {
-                subscription: document.getElementById('subscription').value,
-                region: document.getElementById('region').value,
-                vnet: document.getElementById('vnet').value,
-                vm_size: document.getElementById('vm_size').value,
-                vm_name: document.getElementById('vm_name').value,
-                username: document.getElementById('username').value,
-                password: document.getElementById('password').value
-            };
-
-            document.getElementById('output').textContent = JSON.stringify(data, null, 4);
-        }
-    </script>
+  <script>
+    document.getElementById('vmForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(e.target).entries());
+      fetch("https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData)
+      })
+      .then(res => res.ok ? alert("Request submitted for approval!") : alert("Error submitting request"))
+      .catch(err => console.error(err));
+    });
+  </script>
 </body>
 </html>
