@@ -1,135 +1,113 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>VM Deployment Request</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            margin: 40px;
-            background-color: #f7f9fc;
-        }
-        h1 {
-            color: #333;
-            text-align: center;
-        }
-        form {
-            max-width: 500px;
-            margin: auto;
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0,0,0,0.1);
-        }
-        label {
-            display: block;
-            margin-top: 15px;
-            font-weight: bold;
-        }
-        input, select {
-            width: 100%;
-            padding: 8px;
-            margin-top: 5px;
-            border: 1px solid #ccc;
-            border-radius: 5px;
-        }
-        button {
-            margin-top: 20px;
-            background-color: #0078d4;
-            color: white;
-            border: none;
-            padding: 10px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 16px;
-        }
-        button:hover {
-            background-color: #005a9e;
-        }
+        label { display: block; margin-top: 10px; }
+        select, input { width: 300px; padding: 5px; }
+        .error { color: red; }
+        .success { color: green; }
     </style>
 </head>
 <body>
 
-<h1>VM Deployment Request Form</h1>
+<h2>VM Deployment Request</h2>
 
 <form id="vmForm">
-    <label for="subscription_id">Subscription ID:</label>
-    <select id="subscription_id" name="subscription_id" required>
-        <option value="">Select Subscription</option>
-        <option value="41b68ebf-afca-41f2-bcbc-d54deff6d184">41b68ebf-afca-41f2-bcbc-d54deff6d184</option>
-        <option value="cc684760-8f3d-4882-92de-b19e78706653">cc684760-8f3d-4882-92de-b19e78706653</option>
-    </select>
+    <!-- Subscription -->
+    <label for="subscription">Subscription:</label>
+    <select id="subscription" name="subscription" required></select>
 
-    <label for="region">Region:</label>
-    <select id="region" name="region" required>
-        <option value="">Select Region</option>
-        <option value="East US">East US</option>
-        <option value="Central India">Central India</option>
-        <option value="West Europe">West Europe</option>
-    </select>
+    <!-- Resource Group -->
+    <label for="resourceGroup">Resource Group:</label>
+    <select id="resourceGroup" name="resourceGroup" required></select>
 
-    <label for="vm_size">VM Size:</label>
-    <select id="vm_size" name="vm_size" required>
-        <option value="">Select Size</option>
-        <option value="Standard_DS1_v2">Standard_DS1_v2</option>
-        <option value="Standard_DS2_v2">Standard_DS2_v2</option>
-        <option value="Standard_B2s">Standard_B2s</option>
-    </select>
+    <!-- VNet -->
+    <label for="vnet">Virtual Network:</label>
+    <select id="vnet" name="vnet" required></select>
 
-    <label for="vnet">VNet:</label>
-    <select id="vnet" name="vnet" required>
-        <option value="">Select VNet</option>
-        <option value="vnet-eastus">vnet-eastus</option>
-        <option value="vnet-centralindia">vnet-centralindia</option>
-    </select>
+    <!-- VM Name -->
+    <label for="vmName">VM Name:</label>
+    <input type="text" id="vmName" name="vmName" required>
+    <div id="vmStatus"></div>
 
-    <label for="vm_name">VM Name:</label>
-    <input type="text" id="vm_name" name="vm_name" required>
-
-    <label for="username">Username:</label>
-    <input type="text" id="username" name="username" required>
-
-    <label for="password">Password:</label>
-    <input type="password" id="password" name="password" required>
-
-    <button type="submit">Submit Request</button>
+    <br><br>
+    <button type="submit">Deploy VM</button>
 </form>
 
 <script>
-document.getElementById("vmForm").addEventListener("submit", function(e) {
-    e.preventDefault();
+async function apiFetch(url) {
+    const res = await fetch(url);
+    return await res.json();
+}
 
-    const formData = {
-        subscription_id: document.getElementById("subscription_id").value,
-        region: document.getElementById("region").value,
-        vm_size: document.getElementById("vm_size").value,
-        vm_name: document.getElementById("vm_name").value,
-        username: document.getElementById("username").value,
-        password: document.getElementById("password").value,
-        vnet: document.getElementById("vnet").value
-    };
-
-    fetch("https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM", {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
-    })
-    .then(response => {
-        if (response.ok) {
-            alert("VM deployment request submitted successfully!");
-            document.getElementById("vmForm").reset();
-        } else {
-            alert("Failed to submit request.");
-        }
-    })
-    .catch(error => {
-        console.error("Error:", error);
-        alert("An error occurred while submitting the request.");
+async function loadSubscriptions() {
+    const data = await apiFetch('/api/getSubscriptions');
+    const subSelect = document.getElementById('subscription');
+    subSelect.innerHTML = '<option value="">Select Subscription</option>';
+    data.forEach(sub => {
+        let opt = document.createElement('option');
+        opt.value = sub.id;
+        opt.textContent = sub.name;
+        subSelect.appendChild(opt);
     });
+}
+
+async function loadResourceGroups(subscriptionId) {
+    const data = await apiFetch(`/api/getResourceGroups?subscriptionId=${subscriptionId}`);
+    const rgSelect = document.getElementById('resourceGroup');
+    rgSelect.innerHTML = '<option value="">Select Resource Group</option>';
+    data.forEach(rg => {
+        let opt = document.createElement('option');
+        opt.value = rg.name;
+        opt.textContent = rg.name;
+        rgSelect.appendChild(opt);
+    });
+}
+
+async function loadVNets(subscriptionId, resourceGroup) {
+    const data = await apiFetch(`/api/getVNets?subscriptionId=${subscriptionId}&resourceGroup=${resourceGroup}`);
+    const vnetSelect = document.getElementById('vnet');
+    vnetSelect.innerHTML = '<option value="">Select VNet</option>';
+    data.forEach(vnet => {
+        let opt = document.createElement('option');
+        opt.value = vnet.name;
+        opt.textContent = vnet.name;
+        vnetSelect.appendChild(opt);
+    });
+}
+
+async function checkVMName(subscriptionId, resourceGroup, vmName) {
+    if (!subscriptionId || !resourceGroup || !vmName) return;
+    const statusDiv = document.getElementById('vmStatus');
+    statusDiv.textContent = "Checking availability...";
+    const result = await apiFetch(`/api/checkVMName?subscriptionId=${subscriptionId}&resourceGroup=${resourceGroup}&vmName=${vmName}`);
+    if (result.exists) {
+        statusDiv.innerHTML = `<span class="error">❌ VM name already exists!</span>`;
+        return false;
+    } else {
+        statusDiv.innerHTML = `<span class="success">✅ VM name is available</span>`;
+        return true;
+    }
+}
+
+document.getElementById('subscription').addEventListener('change', (e) => {
+    loadResourceGroups(e.target.value);
 });
+
+document.getElementById('resourceGroup').addEventListener('change', (e) => {
+    const subscriptionId = document.getElementById('subscription').value;
+    loadVNets(subscriptionId, e.target.value);
+});
+
+document.getElementById('vmName').addEventListener('blur', () => {
+    const sub = document.getElementById('subscription').value;
+    const rg = document.getElementById('resourceGroup').value;
+    const vmName = document.getElementById('vmName').value;
+    checkVMName(sub, rg, vmName);
+});
+
+window.onload = loadSubscriptions;
 </script>
 
 </body>
