@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Azure Static UI</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        label { display: block; margin-top: 10px; font-weight: bold; }
+        select, button { margin-top: 5px; padding: 5px; }
+    </style>
+</head>
+<body>
+    <h1>Azure Deployment Form</h1>
+
+    <label for="subscription">Subscription</label>
+    <select id="subscription">
+        <option>Subscription 1</option>
+        <option>Subscription 2</option>
+    </select>
+
+    <label for="region">Region</label>
+    <select id="region">
+        <option>East US</option>
+        <option>West Europe</option>
+        <option>Southeast Asia</option>
+    </select>
+
+    <label for="vnet">Virtual Network</label>
+    <select id="vnet">
+        <option>VNet1</option>
+        <option>VNet2</option>
+    </select>
+
+    <label for="subnet">Subnet</label>
+    <select id="subnet">
+        <option>Subnet-A</option>
+        <option>Subnet-B</option>
+    </select>
+
+    <br><br>
+    <button onclick="alert('Form Submitted!')">Submit</button>
+</body>
+</html>
