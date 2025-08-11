@@ -6,174 +6,145 @@
 <title>VM Deployment Request</title>
 <style>
   body { font-family: Arial, sans-serif; margin: 40px; background: #f7f9fc; }
-  form { max-width:700px; margin:auto; background:#fff; padding:20px; border-radius:8px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-  label{display:block;margin-top:12px;font-weight:600}
-  input,select{width:100%;padding:8px;margin-top:6px;border:1px solid #ccc;border-radius:6px}
-  button{margin-top:18px;background:#0078d4;color:#fff;border:none;padding:10px;border-radius:6px;cursor:pointer}
-  .small{font-size:0.9rem;color:#666}
+  h1 { text-align:center; color:#333; }
+  form { max-width: 720px; margin:auto; background:#fff; padding:20px; border-radius:10px; box-shadow:0 6px 18px rgba(0,0,0,.08); }
+  label { display:block; margin-top:14px; font-weight:600; }
+  input,select { width:100%; padding:10px; margin-top:6px; border:1px solid #cbd5e1; border-radius:8px; }
+  button { margin-top:18px; background:#0078d4; color:#fff; border:0; padding:12px 16px; border-radius:10px; cursor:pointer; font-size:16px; }
+  button:hover { background:#005a9e; }
+  .row { display:grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .banner { margin:14px 0 0; padding:10px 12px; border-radius:8px; font-size:14px; }
+  .ok { background:#e6ffed; border:1px solid #81e6a8; color:#065f46; }
+  .err { background:#fff5f5; border:1px solid #feb2b2; color:#9b2c2c; }
 </style>
 </head>
 <body>
-<h1 style="text-align:center;color:#333">VM Deployment Request</h1>
 
-<form id="vmForm">
-  <label>Subscription</label>
-  <select id="subscription_id" required>
-    <option value="">Loading...</option>
-  </select>
+<h1>VM Deployment Request</h1>
 
-  <label>Resource Group</label>
-  <select id="resource_group" required><option value="">Select subscription first</option></select>
-
-  <label>VNet</label>
-  <select id="vnet" required><option value="">Select resource group first</option></select>
-
-  <label>Region</label>
-  <select id="region" required>
-    <option value="">Select Region</option>
-    <option value="East US">East US</option>
-    <option value="Central India">Central India</option>
-    <option value="West Europe">West Europe</option>
-  </select>
-
-  <label>VM Size</label>
-  <select id="vm_size" required>
-    <option value="">Select size</option>
-    <option value="Standard_DS1_v2">Standard_DS1_v2</option>
-    <option value="Standard_DS2_v2">Standard_DS2_v2</option>
-    <option value="Standard_B2s">Standard_B2s</option>
-  </select>
-
-  <label>VM Name</label>
-  <input id="vm_name" required />
-
-  <label>Username</label>
-  <input id="username" required />
-
-  <label>Password</label>
-  <input id="password" type="password" required />
-
-  <div style="display:flex;gap:8px">
-    <button id="checkBtn" type="button">Check & Submit</button>
+<form id="vmForm" novalidate>
+  <div class="row">
+    <div>
+      <label for="subscription_id">Subscription</label>
+      <select id="subscription_id" required>
+        <option value="">Select Subscription</option>
+        <option value="41b68ebf-afca-41f2-bcbc-d54deff6d184">41b68ebf-afca-41f2-bcbc-d54deff6d184</option>
+        <option value="cc684760-8f3d-4882-92de-b19e78706653">cc684760-8f3d-4882-92de-b19e78706653</option>
+      </select>
+    </div>
+    <div>
+      <label for="resource_group">Resource Group</label>
+      <select id="resource_group" required>
+        <option value="">Select Resource Group</option>
+        <option value="persistent">persistent</option>
+        <!-- add more RGs here if needed -->
+      </select>
+    </div>
   </div>
 
-  <p id="msg" class="small"></p>
+  <div class="row">
+    <div>
+      <label for="vnet">VNet</label>
+      <select id="vnet" required>
+        <option value="">Select VNet</option>
+        <option value="vnet-eastus">vnet-eastus</option>
+        <!-- add more VNets here if needed -->
+      </select>
+    </div>
+    <div>
+      <label for="region">Region</label>
+      <select id="region" required>
+        <option value="">Select Region</option>
+        <option>East US</option>
+        <option>Central India</option>
+        <option>West Europe</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="vm_size">VM Size</label>
+      <select id="vm_size" required>
+        <option value="">Select size</option>
+        <option>Standard_DS1_v2</option>
+        <option>Standard_DS2_v2</option>
+        <option>Standard_B2s</option>
+      </select>
+    </div>
+    <div>
+      <label for="vm_name">VM Name</label>
+      <input id="vm_name" required pattern="^[a-zA-Z0-9-]{1,64}$" title="Letters, numbers, and hyphens only (max 64 chars)" />
+    </div>
+  </div>
+
+  <div class="row">
+    <div>
+      <label for="username">Username</label>
+      <input id="username" required />
+    </div>
+    <div>
+      <label for="password">Password</label>
+      <input id="password" type="password" required />
+    </div>
+  </div>
+
+  <button type="button" id="submitBtn">Check & Submit</button>
+  <div id="msg" class="banner" hidden></div>
 </form>
 
 <script>
-const LOGIC_BASE = {
-  subs: "https://<YOUR_LOGIC_APP_BASE>/triggers/GetSubscriptions/paths/invoke",
-  rgs: "https://<YOUR_LOGIC_APP_BASE>/triggers/GetResourceGroups/paths/invoke",
-  vnets: "https://<YOUR_LOGIC_APP_BASE>/triggers/GetVNets/paths/invoke",
-  submit: "https://<YOUR_LOGIC_APP_BASE>/triggers/SubmitVMRequest/paths/invoke"
-};
-// Replace <YOUR_LOGIC_APP_BASE> with the host + path provided by the Logic App (the same format you used earlier).
-// If your Logic App triggers require query params (api-version & sig), append them like ?api-version=...&sig=...
+const LOGIC_APP_SUBMIT_URL = "https://prod-27.centralindia.logic.azure.com:443/workflows/2a8a2f9f67804fecbaf108298b8eb12b/triggers/When_a_HTTP_request_is_received/paths/invoke?api-version=2016-10-01&sp=%2Ftriggers%2FWhen_a_HTTP_request_is_received%2Frun&sv=1.0&sig=v-7BsVDKtlB0rXAPeQxaNC8exIpd5EL4VJ9YIPAtPEM";
 
-const el = id => document.getElementById(id);
-const msg = el('msg');
+const $ = id => document.getElementById(id);
+const msg = $('msg');
 
-async function loadSubscriptions() {
-  try {
-    const res = await fetch(LOGIC_BASE.subs, { method: 'GET' });
-    const body = await res.json();
-    // body.value expected to be array of subscriptions
-    const subs = body.value || body;
-    const sel = el('subscription_id');
-    sel.innerHTML = '<option value="">Select Subscription</option>';
-    subs.forEach(s => {
-      const id = s.subscriptionId || s.subscription_id || s.id || s.name;
-      const title = s.displayName || s.name || id;
-      const opt = document.createElement('option');
-      opt.value = id.replace('/subscriptions/','') || id;
-      opt.text = title + (id ? (' — ' + (s.subscriptionId || id)) : '');
-      sel.appendChild(opt);
-    });
-  } catch (e) {
-    msg.textContent = 'Error loading subscriptions: ' + e;
-  }
+function showMsg(text, ok=false) {
+  msg.hidden = false;
+  msg.className = 'banner ' + (ok ? 'ok' : 'err');
+  msg.textContent = text;
 }
+function clearMsg(){ msg.hidden = true; msg.textContent=''; }
 
-async function loadResourceGroups(subscriptionId) {
-  try {
-    const res = await fetch(LOGIC_BASE.rgs + '?subscription_id=' + encodeURIComponent(subscriptionId), { method: 'GET' });
-    const body = await res.json();
-    const groups = body.value || body;
-    const sel = el('resource_group');
-    sel.innerHTML = '<option value="">Select Resource Group</option>';
-    groups.forEach(g => {
-      const opt = document.createElement('option');
-      opt.value = g.name;
-      opt.text = g.name;
-      sel.appendChild(opt);
-    });
-  } catch (e) {
-    msg.textContent = 'Error loading resource groups: ' + e;
-  }
-}
+$('submitBtn').addEventListener('click', async () => {
+  clearMsg();
 
-async function loadVnets(subscriptionId, rg) {
-  try {
-    const res = await fetch(LOGIC_BASE.vnets + '?subscription_id=' + encodeURIComponent(subscriptionId) + '&resource_group=' + encodeURIComponent(rg), { method: 'GET' });
-    const body = await res.json();
-    const nets = body.value || body;
-    const sel = el('vnet'); sel.innerHTML = '<option value="">Select VNet</option>';
-    nets.forEach(n => {
-      const opt = document.createElement('option'); opt.value = n.name; opt.text = n.name; sel.appendChild(opt);
-    });
-  } catch (e) {
-    msg.textContent = 'Error loading VNets: ' + e;
-  }
-}
-
-el('subscription_id').addEventListener('change', e => {
-  const sub = e.target.value;
-  if (sub) { loadResourceGroups(sub); } else { el('resource_group').innerHTML = '<option value="">Select subscription first</option>'; el('vnet').innerHTML = '<option value="">Select resource group first</option>'; }
-});
-el('resource_group').addEventListener('change', e => {
-  const sub = el('subscription_id').value;
-  const rg = e.target.value;
-  if (sub && rg) loadVnets(sub, rg);
-});
-
-el('checkBtn').addEventListener('click', async () => {
-  msg.textContent = '';
-  const data = {
-    subscription_id: el('subscription_id').value,
-    resource_group: el('resource_group').value,
-    vnet: el('vnet').value,
-    region: el('region').value,
-    vm_size: el('vm_size').value,
-    vm_name: el('vm_name').value,
-    username: el('username').value,
-    password: el('password').value
+  // basic front-end validation
+  const payload = {
+    subscription_id: $('subscription_id').value,
+    resource_group: $('resource_group').value,
+    vnet: $('vnet').value,
+    region: $('region').value,
+    vm_size: $('vm_size').value,
+    vm_name: $('vm_name').value.trim(),
+    username: $('username').value,
+    password: $('password').value
   };
-  // basic validation
-  for (const k of ['subscription_id','resource_group','vnet','region','vm_size','vm_name','username','password']) {
-    if (!data[k]) { msg.textContent = 'Please fill ' + k; return; }
+  for (const k of Object.keys(payload)) {
+    if (!payload[k]) { showMsg(`Please fill: ${k}`); return; }
   }
+  // optional: enforce simple password length
+  if (payload.password.length < 8) { showMsg('Password must be at least 8 characters'); return; }
 
-  // Call the SubmitVMRequest endpoint — Logic App will check VM existence and either return error or send approval & trigger pipeline
   try {
-    const res = await fetch(LOGIC_BASE.submit, {
+    const res = await fetch(LOGIC_APP_SUBMIT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(data)
+      headers: { 'Content-Type':'application/json' },
+      body: JSON.stringify(payload)
     });
-    const body = await res.json();
+    const body = await res.json().catch(()=> ({}));
+
     if (!res.ok) {
-      msg.textContent = 'Error: ' + (body.error || JSON.stringify(body));
+      // Logic App returns 400 if VM exists
+      showMsg(body.error || JSON.stringify(body) || `Request failed (${res.status})`);
     } else {
-      msg.textContent = 'Request accepted: ' + (body.message || 'Approval sent (check email).');
-      document.getElementById('vmForm').reset();
+      showMsg(body.message || 'Request accepted. Approval email sent.', true);
+      $('vmForm').reset();
     }
   } catch (e) {
-    msg.textContent = 'Submit error: ' + e;
+    showMsg('Submit failed: ' + e);
   }
 });
-
-// load subscriptions on page load
-loadSubscriptions();
 </script>
 </body>
 </html>
